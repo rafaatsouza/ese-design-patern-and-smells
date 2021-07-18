@@ -1,3 +1,6 @@
+import os.path
+
+from xml.dom import minidom
 from enum import Enum
 
 
@@ -15,6 +18,12 @@ class Parser:
             raise Exception('Invalid system')
 
         if not filepath:
+            raise Exception('Empty filepath')
+
+        if not os.path.isfile(filepath):
+            raise Exception('Invalid filepath')
+
+        if not filepath.endswith('.xml'):
             raise Exception('Invalid filepath')
 
         methods = {
@@ -32,8 +41,24 @@ class Parser:
         self.method(self.filepath)
 
     def parseJasper(self, filepath):
-        raise Exception(
-            'Parse from JasperReports output file is not implemented')
+        classes = []
+
+        xml = minidom.parse(filepath)
+        patternName = xml.getElementsByTagName(
+            'PatternName')[0].firstChild.data
+
+        anchors = xml.getElementsByTagName('AnchorsInstance')
+        roles = xml.getElementsByTagName('RoleInstance')
+
+        for anchor in anchors:
+            if anchor.attributes['value'].value not in classes:
+                classes.append(anchor.attributes['value'].value)
+
+        for role in roles:
+            if role.attributes['value'].value not in classes:
+                classes.append(role.attributes['value'].value)
+
+        self.printOutput('jasper', patternName, classes)
 
     def parseJFree(self, filepath):
         raise Exception('Parse from JFreeChart output file is not implemented')
@@ -46,3 +71,8 @@ class Parser:
 
     def parseStruts(self, filepath):
         raise Exception('Parse from Struts output file is not implemented')
+
+    def printOutput(self, tool, patternName, classes):
+        print('tool;pattern;class')
+        for _class in classes:
+            print('{};{};{}'.format(tool, patternName, _class))
