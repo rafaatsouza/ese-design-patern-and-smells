@@ -1,11 +1,11 @@
 import argparse
 from parser import Parser
-from parser import Systems
+from parser import Tools
 
 parser = argparse.ArgumentParser(description="Arguments Description")
 
-parser.add_argument('--tool', type=Systems, default=None,
-                    required=True, choices=list(Systems), help='Tool')
+parser.add_argument('--tool', type=Tools, default=None,
+                    required=True, choices=list(Tools), help='Tool')
 parser.add_argument('--file', default=None,
                     required=True, help='File path')
 

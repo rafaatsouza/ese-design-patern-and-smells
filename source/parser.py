@@ -4,7 +4,7 @@ from xml.dom import minidom
 from enum import Enum
 
 
-class Systems(Enum):
+class Tools(Enum):
     JasperReports = 'jasper'
     JFreeChart = 'jfree'
     JHotDraw = 'jhot'
@@ -13,9 +13,9 @@ class Systems(Enum):
 
 
 class Parser:
-    def __init__(self, system, filepath):
-        if not isinstance(system, Systems):
-            raise Exception('Invalid system')
+    def __init__(self, tool, filepath):
+        if not isinstance(tool, Tools):
+            raise Exception('Invalid tool')
 
         if not filepath:
             raise Exception('Empty filepath')
@@ -26,51 +26,42 @@ class Parser:
         if not filepath.endswith('.xml'):
             raise Exception('Invalid filepath')
 
-        methods = {
-            Systems.JasperReports: self.parseJasper,
-            Systems.JFreeChart: self.parseJFree,
-            Systems.JHotDraw: self.parseJHot,
-            Systems.JMeter: self.parseJMeter,
-            Systems.Struts: self.parseStruts
+        tools = {
+            Tools.JasperReports: 'JasperReports',
+            Tools.JFreeChart: 'JFreeChart',
+            Tools.JHotDraw: 'JHotDraw',
+            Tools.JMeter: 'JMeter',
+            Tools.Struts: 'Struts'
         }
 
-        self.method = methods[system]
+        self.tool = tools[tool]
         self.filepath = filepath
 
     def getParsedOutput(self):
-        self.method(self.filepath)
-
-    def parseJasper(self, filepath):
-        classes = []
-
-        xml = minidom.parse(filepath)
+        xml = minidom.parse(self.filepath)
         patternName = xml.getElementsByTagName(
             'PatternName')[0].firstChild.data
+            
+        classes = self.getClasses(xml)
 
+        self.printOutput(self.tool, patternName, classes)
+
+    def getClasses(self, xml):
+        classes = []
         anchors = xml.getElementsByTagName('AnchorsInstance')
         roles = xml.getElementsByTagName('RoleInstance')
 
-        for anchor in anchors:
-            if anchor.attributes['value'].value not in classes:
-                classes.append(anchor.attributes['value'].value)
+        if anchors:
+            for anchor in anchors:
+                if anchor.attributes['value'].value not in classes:
+                    classes.append(anchor.attributes['value'].value)
 
-        for role in roles:
-            if role.attributes['value'].value not in classes:
-                classes.append(role.attributes['value'].value)
+        if roles:
+            for role in roles:
+                if role.attributes['value'].value not in classes:
+                    classes.append(role.attributes['value'].value)
 
-        self.printOutput('jasper', patternName, classes)
-
-    def parseJFree(self, filepath):
-        raise Exception('Parse from JFreeChart output file is not implemented')
-
-    def parseJHot(self, filepath):
-        raise Exception('Parse from JHotDraw output file is not implemented')
-
-    def parseJMeter(self, filepath):
-        raise Exception('Parse from JMeter output file is not implemented')
-
-    def parseStruts(self, filepath):
-        raise Exception('Parse from Struts output file is not implemented')
+        return classes
 
     def printOutput(self, tool, patternName, classes):
         print('tool;pattern;class')
