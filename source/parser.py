@@ -1,4 +1,4 @@
-import os.path
+import os
 
 from xml.dom import minidom
 from enum import Enum
@@ -37,7 +37,7 @@ class Parser:
         self.tool = tools[tool]
         self.filepath = filepath
 
-    def getParsedOutput(self):
+    def printParsedXml(self):
         xml = minidom.parse(self.filepath)
         patternName = xml.getElementsByTagName(
             'PatternName')[0].firstChild.data
@@ -45,6 +45,11 @@ class Parser:
         classes = self.getClasses(xml)
 
         self.printOutput(self.tool, patternName, classes)
+
+    def getOutputFilePath(self):
+        parts = self.filepath.split('/')
+        parts[-1] = 'parsed-{}'.format(parts[-1])
+        return '/'.join(parts).replace('.xml', '.csv')
 
     def getClasses(self, xml):
         classes = []
@@ -64,6 +69,7 @@ class Parser:
         return classes
 
     def printOutput(self, tool, patternName, classes):
-        print('tool;pattern;class')
-        for _class in classes:
-            print('{};{};{}'.format(tool, patternName, _class))
+        with open(self.getOutputFilePath(), 'w') as file:
+            file.write('tool;pattern;class\n')
+            for _class in classes:
+                file.write('{};{};{}\n'.format(tool, patternName, _class))

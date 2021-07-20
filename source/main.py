@@ -12,4 +12,4 @@ parser.add_argument('--file', default=None,
 args = parser.parse_args()
 
 parser = Parser(args.tool, args.file)
-parser.getParsedOutput()
+parser.printParsedXml()
