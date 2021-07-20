@@ -34,7 +34,7 @@ for filename in $( ls $TARGET_FOLDER/*.xml ) ; do
     echo "${GREEN}Processing... $filename${NC}"
     python main.py --tool $FROM_TOOL --file $filename
     echo "${GREEN}Done!\n${NC}"
-    COUNT_PROCESSED_FILES=$[COUNT_PROCESSED_FILES+1]
+    COUNT_PROCESSED_FILES=$((COUNT_PROCESSED_FILES+1))
 done
 
 echo "${GREEN}\
