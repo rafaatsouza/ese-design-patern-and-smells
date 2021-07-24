@@ -31,7 +31,9 @@ class Analyzer:
         datasets = {}
 
         for design_pattern in design_patterns:
-            datasets[design_pattern] = dataset.loc[dataset[design_pattern] == 1]
+            datasets[design_pattern] = dataset.copy()
+            datasets[design_pattern] = datasets[design_pattern][datasets[design_pattern]
+                                                                [design_pattern] == 1]
             for _design_pattern in design_patterns:
                 datasets[design_pattern].drop(
                     _design_pattern, inplace=True, axis=1)
@@ -42,6 +44,17 @@ class Analyzer:
         return datasets
 
     def run(self):
-        for key, value in self.datasets.items():
-            print('Dataset for the {} pattern\n'.format(key))
-            print(self.datasets[key])
+        bad_smells_columns = ['GC', 'RPB', 'FE', 'LM']
+        bad_smells = ['GodClass', 'RefusedBequest',
+                      'FeatureEnvy', 'LongMethod']
+
+        for design_pattern, dataset in self.datasets.items():
+            dataset_len = len(dataset)
+            print('---------------')
+            for i in range(len(bad_smells)):
+                print('Frequency of {} in the {} pattern: {}'.format(
+                    bad_smells[i], design_pattern, (dataset[bad_smells_columns[i]].sum())/dataset_len))
+            print('---------------\n')
+
+        del bad_smells_columns
+        del bad_smells
