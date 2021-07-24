@@ -10,3 +10,5 @@ args = parser.parse_args()
 
 analyzer = Analyzer(args.file)
 analyzer.run()
+
+analyzer.show()

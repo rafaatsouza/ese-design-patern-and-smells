@@ -13,48 +13,89 @@ class Analyzer:
         if not filepath.endswith('.csv'):
             raise Exception('Invalid filepath')
 
-        self.datasets = self.get_datasets(filepath)
+        self.dataframes = self.__get_dataframes(filepath)
+        self.summary = None
 
-    def get_datasets(self, filepath):
-        dataset = pd.read_csv(filepath, sep=';', header=0)
+    def __get_dataframes(self, filepath):
+        dataframe = pd.read_csv(filepath, sep=';', header=0)
 
-        dataset.drop('system', inplace=True, axis=1)
-        dataset.drop('cbo', inplace=True, axis=1)
-        dataset.drop('wmc', inplace=True, axis=1)
-        dataset.drop('dit', inplace=True, axis=1)
-        dataset.drop('rfc', inplace=True, axis=1)
-        dataset.drop('nom', inplace=True, axis=1)
-        dataset.drop('loc', inplace=True, axis=1)
+        dataframe.drop('system', inplace=True, axis=1)
+        dataframe.drop('cbo', inplace=True, axis=1)
+        dataframe.drop('wmc', inplace=True, axis=1)
+        dataframe.drop('dit', inplace=True, axis=1)
+        dataframe.drop('rfc', inplace=True, axis=1)
+        dataframe.drop('nom', inplace=True, axis=1)
+        dataframe.drop('loc', inplace=True, axis=1)
 
         design_patterns = ['Bridge', 'Composite', 'ChainOfResponsibility',
                            'TemplateMethod', 'FactoryMethod', 'Prototype']
-        datasets = {}
+        dataframes = {}
 
         for design_pattern in design_patterns:
-            datasets[design_pattern] = dataset.copy()
-            datasets[design_pattern] = datasets[design_pattern][datasets[design_pattern]
-                                                                [design_pattern] == 1]
+            dataframes[design_pattern] = dataframe.copy()
+            dataframes[design_pattern] = dataframes[design_pattern][dataframes[design_pattern]
+                                                                    [design_pattern] == 1]
             for _design_pattern in design_patterns:
-                datasets[design_pattern].drop(
+                dataframes[design_pattern].drop(
                     _design_pattern, inplace=True, axis=1)
 
         del design_patterns
-        del dataset
+        del dataframe
 
-        return datasets
+        return dataframes
 
     def run(self):
-        bad_smells_columns = ['GC', 'RPB', 'FE', 'LM']
-        bad_smells = ['GodClass', 'RefusedBequest',
-                      'FeatureEnvy', 'LongMethod']
+        smells_columns = ['GC', 'RPB', 'FE', 'LM']
+        smells = ['GodClass', 'RefusedBequest', 'FeatureEnvy', 'LongMethod']
 
-        for design_pattern, dataset in self.datasets.items():
-            dataset_len = len(dataset)
+        self.summary = {}
+
+        for design_pattern, dataframe in self.dataframes.items():
+            classes = dataframe.shape[0]
+
+            smelly_series = dataframe.apply(
+                lambda x: self.__has_any_smell(x, smells_columns), axis=1)
+            smelly_classes = len(smelly_series[smelly_series == True].index)
+
+            self.summary[design_pattern] = {}
+
+            for i in range(len(smells)):
+                self.summary[design_pattern][smells[i]] = {
+                    'freq_in_all': ((dataframe[smells_columns[i]].sum())/classes),
+                    'freq_in_smelly': ((dataframe[smells_columns[i]].sum())/smelly_classes)
+                }
+
+            self.summary[design_pattern]['classes'] = classes
+            self.summary[design_pattern]['smelly_classes'] = smelly_classes
+
+        del classes
+        del smelly_classes
+        del smelly_series
+        del smells_columns
+        del smells
+        del self.dataframes
+
+    def show(self):
+        if self.summary is None:
+            raise ValueError(
+                'Summary not computed. Call the "run" method first')
+
+        for design_pattern, info in self.summary.items():
             print('---------------')
-            for i in range(len(bad_smells)):
-                print('Frequency of {} in the {} pattern: {}'.format(
-                    bad_smells[i], design_pattern, (dataset[bad_smells_columns[i]].sum())/dataset_len))
+            print('{} design pattern'.format(design_pattern))
+            print('{} classes, {} smelly classes'.format(
+                info['classes'], info['smelly_classes']))
+
+            for smell, data in [(x, y) for x, y in info.items() if x not in ['classes', 'smelly_classes']]:
+                print('   >> {} occurrences across all classes: {}'.format(
+                    smell, data['freq_in_all']))
+                print('   >> {} occurrences across all smelly classes: {}'.format(
+                    smell, data['freq_in_smelly']))
+
             print('---------------\n')
 
-        del bad_smells_columns
-        del bad_smells
+    def __has_any_smell(self, row, smells):
+        for smell in smells:
+            if row[smell] == 1:
+                return True
+        return False
