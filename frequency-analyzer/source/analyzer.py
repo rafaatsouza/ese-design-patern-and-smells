@@ -27,16 +27,18 @@ class Analyzer:
         dataframe.drop('nom', inplace=True, axis=1)
         dataframe.drop('loc', inplace=True, axis=1)
 
-        design_patterns = ['Bridge', 'Composite', 'ChainOfResponsibility',
-                           'TemplateMethod', 'FactoryMethod', 'Prototype']
         dataframes = {}
 
-        for design_pattern in design_patterns:
-            dataframes[design_pattern] = dataframe.copy()
-            dataframes[design_pattern] = dataframes[design_pattern][dataframes[design_pattern]
-                                                                    [design_pattern] == 1]
+        design_pattern_labels = ['Bridge', 'Composite', 'Chain of Responsibility',
+                                 'Template Method', 'Factory Method', 'Prototype']
+        design_patterns = ['Bridge', 'Composite', 'ChainOfResponsibility',
+                           'TemplateMethod', 'FactoryMethod', 'Prototype']
+
+        for i in range(len(design_patterns)):
+            dataframes[design_pattern_labels[i]] = dataframe.copy()
+            dataframes[design_pattern_labels[i]] = dataframes[design_pattern_labels[i]][dataframes[design_pattern_labels[i]][design_patterns[i]] == 1]
             for _design_pattern in design_patterns:
-                dataframes[design_pattern].drop(
+                dataframes[design_pattern_labels[i]].drop(
                     _design_pattern, inplace=True, axis=1)
 
         del design_patterns
@@ -46,7 +48,8 @@ class Analyzer:
 
     def run(self):
         smells_columns = ['GC', 'RPB', 'FE', 'LM']
-        smells = ['GodClass', 'RefusedBequest', 'FeatureEnvy', 'LongMethod']
+        smells = ['God Class', 'Refused Bequest',
+                  'Feature Envy', 'Long Method']
 
         self.summary = {}
 
