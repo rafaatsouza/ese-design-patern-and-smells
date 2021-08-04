@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 
 
@@ -51,7 +52,11 @@ class Analyzer:
         smells = ['God Class', 'Refused Bequest',
                   'Feature Envy', 'Long Method']
 
-        self.summary = {}
+        smells_average = {}
+        self.summary = {
+            'patterns': {},
+            'smells': {}
+        }                
 
         for design_pattern, dataframe in self.dataframes.items():
             classes = dataframe.shape[0]
@@ -60,16 +65,32 @@ class Analyzer:
                 lambda x: self.__has_any_smell(x, smells_columns), axis=1)
             smelly_classes = len(smelly_series[smelly_series == True].index)
 
-            self.summary[design_pattern] = {}
+            self.summary['patterns'][design_pattern] = {}
 
             for i in range(len(smells)):
-                self.summary[design_pattern][smells[i]] = {
-                    'freq_in_all': ((dataframe[smells_columns[i]].sum())/classes),
+                smell_freq_in_all = (dataframe[smells_columns[i]].sum())/classes
+
+                if len(smells_average) == 0 or smells_columns[i] not in smells_average:
+                    smells_average[smells_columns[i]] = [smell_freq_in_all]
+                else:
+                    smells_average[smells_columns[i]].append(smell_freq_in_all)
+
+                self.summary['patterns'][design_pattern][smells[i]] = {
+                    'freq_in_all': smell_freq_in_all,
                     'freq_in_smelly': ((dataframe[smells_columns[i]].sum())/smelly_classes)
                 }
 
-            self.summary[design_pattern]['classes'] = classes
-            self.summary[design_pattern]['smelly_classes'] = smelly_classes
+            self.summary['patterns'][design_pattern]['classes'] = classes
+            self.summary['patterns'][design_pattern]['smelly_classes'] = smelly_classes
+
+        for i in range(len(smells)):
+            self.summary['smells'][smells[i]] = {
+                'average': np.mean(smells_average[smells_columns[i]]),
+                'standard_deviation': np.std(smells_average[smells_columns[i]])
+            }
+
+        del smells_average
+        del smell_freq_in_all
 
         del classes
         del smelly_classes
@@ -83,7 +104,7 @@ class Analyzer:
             raise ValueError(
                 'Summary not computed. Call the "run" method first')
 
-        for design_pattern, info in self.summary.items():
+        for design_pattern, info in self.summary['patterns'].items():
             print('---------------')
             print('{} design pattern'.format(design_pattern))
             print('{} classes, {} smelly classes'.format(
@@ -96,6 +117,13 @@ class Analyzer:
                     smell, data['freq_in_smelly']))
 
             print('---------------\n')
+
+        for smell, info in self.summary['smells'].items():
+            print('---------------')
+            print('{} bad smell:'.format(smell))
+            print('{} average'.format(info['average']))
+            print('{} standard deviation'.format(info['standard_deviation']))
+            print('\n---------------\n')
 
     def __has_any_smell(self, row, smells):
         for smell in smells:
